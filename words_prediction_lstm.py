@@ -8,6 +8,7 @@ import time
 import sys
 import os
 
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 display_step = 1000
 num_hidden = 512
@@ -129,7 +130,8 @@ def train(train_data_file, model_file, max_update, learning_rate=0.001):
         print "Training completed!"
         print "Training time: ", time.time() - start_time
         saver = tf.train.Saver()
-        saver.save(session, model_file)
+        save_path = saver.save(session, os.path.join(os.getcwd(), model_file))
+        # saver.save(session, "model1")
 
         graph(step_history, acc_history, cost_history)
 
