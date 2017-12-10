@@ -84,6 +84,7 @@ def train(train_data_file, model_file, max_update, learning_rate=0.001):
     cost_history = []
     acc_history = []
     with tf.Session() as session:
+        writer = tf.summary.FileWriter('./graphs', sess.graph)
         session.run(init)
         step = 0
         offset = random.randint(0, num_input + 1)
