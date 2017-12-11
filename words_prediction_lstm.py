@@ -13,6 +13,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 display_step = 1000
 num_hidden = 512
 num_input = 3
+num_layers = 3
 
 
 def build_lstm(x, num_input, words_size):
@@ -30,17 +31,21 @@ def build_lstm(x, num_input, words_size):
     x = tf.split(x, num_input, 1)
 
     # 1-layer LSTM with num_hidden units.
-    # rnn_cell = rnn.BasicRNNCell(num_hidden)
+    # rnn_cell = tf.contrib.rnn.BasicLSTMCell(num_hidden)
+    # rnn_cell = rnn.MultiRNNCell([rnn_cell],[rnn_cell])
+    # rnn_cell = tf.contrib.rnn.BasicLSTMCell(num_hidden)
 
-    rnn_cell = rnn.MultiRNNCell(
-        [rnn.BasicLSTMCell(num_hidden), rnn.BasicLSTMCell(num_hidden)])
-
+    rnn_cell = tf.contrib.rnn.MultiRNNCell(
+        [lstm_cell() for _ in range(num_layers)])
     # generate prediction
     outputs, states = rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
 
     # there are num_input outputs but
     # we only want the last output
     return tf.matmul(outputs[-1], weights['weight']) + biases['bias']
+
+def lstm_cell():
+  return tf.contrib.rnn.BasicLSTMCell(num_hidden)
 
 
 def graph(x, y1, y2):
