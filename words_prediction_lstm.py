@@ -118,7 +118,7 @@ def train(train_data_file, model_file, max_update,regularization='L1',
     # train_op = optimizer.apply_gradients(capped_gvs)
 
 
-    optimizer = tf.train.RMSPropOptimizer(learning_rate = learning_rate).\
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate = learning_rate).\
         minimize(cost)
 
 
