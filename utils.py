@@ -1,5 +1,6 @@
 import numpy as np
 import collections
+from itertools import chain
 
 """
     Define plays dictionary, R: Rock, S: Scissors, P: Paper
@@ -23,7 +24,8 @@ def read_data(fname):
     content = [x.strip() for x in content]
     content = [content[i].split() for i in range(len(content))]
     content = np.array(content)
-    content = np.reshape(content, [-1, ])
+    content = list(chain(*content))
+    # content = np.reshape(content, [-1, ])
     return content
 
 
