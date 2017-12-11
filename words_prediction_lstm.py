@@ -13,7 +13,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 display_step = 1000
 num_hidden = 512
 num_input = 3
-num_layers = 3
+num_layers = 1
 
 
 def build_lstm(x, num_input, words_size):
@@ -30,22 +30,33 @@ def build_lstm(x, num_input, words_size):
     # (eg. [had] [a] [general] -> [20] [6] [33])
     x = tf.split(x, num_input, 1)
 
-    # 1-layer LSTM with num_hidden units.
-    # rnn_cell = tf.contrib.rnn.BasicLSTMCell(num_hidden)
-    # rnn_cell = rnn.MultiRNNCell([rnn_cell],[rnn_cell])
-    # rnn_cell = tf.contrib.rnn.BasicLSTMCell(num_hidden)
-
     rnn_cell = tf.contrib.rnn.MultiRNNCell(
         [lstm_cell() for _ in range(num_layers)])
     # generate prediction
-    outputs, states = rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
+    outputs, states = rnn.static_rnn(rnn_cell,x,
+                                              dtype=tf.float32)
+
+    # rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(num_hidden),
+    #               rnn.BasicLSTMCell(num_hidden)])
+    # # generate prediction
+    # outputs, states = rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
+
+
+    # Tried two ways below, got error :
+    # outputs, states = rnn.static_bidirectional_rnn(rnn_cell,rnn_cell,x,
+    #                                                dtype=tf.float32)
+    # outputs, states = tf.nn.bidirectional_dynamic_rnn(
+    # cell_fw=rnn_cell,
+    # cell_bw=rnn_cell,
+    # dtype=tf.float64,
+    # inputs=x)
 
     # there are num_input outputs but
-    # we only want the last output
+    # we only want the last outputtf.contrib.rnn.static_bidirectional_rnn
     return tf.matmul(outputs[-1], weights['weight']) + biases['bias']
 
 def lstm_cell():
-  return tf.contrib.rnn.BasicLSTMCell(num_hidden)
+  return tf.contrib.rnn.BasicLSTMCell(num_hidden,state_is_tuple=True)
 
 
 def graph(x, y1, y2):
@@ -74,26 +85,35 @@ def train(train_data_file, model_file, max_update,regularization='L1',
 
     pred = build_lstm(x, num_input, words_size)
     start_time = time.time()
-    # TODO: L1 & L2 implementation in LSTM is to be explored
-    # regularizer = 0
-    # if regularization == 'L1':
-    #     regularizer = 0.001 * sum(
-    #         tf.contrib.layers.l1_regularizer(tf_var)
-    #         for tf_var in tf.trainable_variables()
-    #         if not ("noreg" in tf_var.name or "Bias" in tf_var.name)
-    #     )
-    # elif regularization == 'L2':
-    #     regularizer = 0.001 * sum(
-    #         tf.contrib.layers.l2_regularizer(tf_var)
-    #         for tf_var in tf.trainable_variables()
-    #         if not ("noreg" in tf_var.name or "Bias" in tf_var.name)
-    #     )
+
 
     # Loss and optimizer
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-        logits=pred, labels=y))
+    if regularization == 'L1':
+        l1_regularizer = tf.contrib.layers.l1_regularizer(
+            scale=0.005, scope=None
+        )
+        weights = tf.trainable_variables()  # all vars of your graph
+        regularization_cost = tf.contrib.layers.apply_regularization(
+            l1_regularizer, weights)
+        cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+            logits=pred, labels=y)) +  regularization_cost
+    elif regularization == 'L2':
+        l2_regularizer = tf.contrib.layers.l2_regularizer(
+            scale=0.005, scope=None)
+        weights = tf.trainable_variables()  # all vars of your graph
+        regularization_cost = tf.contrib.layers.apply_regularization(
+            l2_regularizer, weights)
+        cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+            logits=pred, labels=y)) + regularization_cost
+    else :
+        cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+            logits=pred, labels=y))
+
     optimizer = tf.train.GradientDescentOptimizer(
         learning_rate=learning_rate).minimize(cost)
+    # optimizer = tf.train.RMSPropOptimizer(learning_rate = learning_rate).\
+    #     minimize(cost)
+
 
     # Model evaluation
     correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
