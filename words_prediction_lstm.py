@@ -69,24 +69,25 @@ def train(train_data_file, model_file, max_update,regularization='L1',
 
     pred = build_lstm(x, num_input, words_size)
     start_time = time.time()
-    regularizer = 0
-    if regularization == 'L1':
-        regularizer = 0.001 * sum(
-            tf.nn.l1_loss(tf_var)
-            for tf_var in tf.trainable_variables()
-            if not ("noreg" in tf_var.name or "Bias" in tf_var.name)
-        )
-    elif regularization == 'L2':
-        regularizer = 0.001 * sum(
-            tf.nn.l2_loss(tf_var)
-            for tf_var in tf.trainable_variables()
-            if not ("noreg" in tf_var.name or "Bias" in tf_var.name)
-        )
+    # TODO: L1 & L2 implementation in LSTM is to be explored
+    # regularizer = 0
+    # if regularization == 'L1':
+    #     regularizer = 0.001 * sum(
+    #         tf.contrib.layers.l1_regularizer(tf_var)
+    #         for tf_var in tf.trainable_variables()
+    #         if not ("noreg" in tf_var.name or "Bias" in tf_var.name)
+    #     )
+    # elif regularization == 'L2':
+    #     regularizer = 0.001 * sum(
+    #         tf.contrib.layers.l2_regularizer(tf_var)
+    #         for tf_var in tf.trainable_variables()
+    #         if not ("noreg" in tf_var.name or "Bias" in tf_var.name)
+    #     )
 
     # Loss and optimizer
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-        logits=pred, labels=y) + regularizer)
-    optimizer = tf.train.RMSPropOptimizer(
+        logits=pred, labels=y))
+    optimizer = tf.train.GradientDescentOptimizer(
         learning_rate=learning_rate).minimize(cost)
 
     # Model evaluation
@@ -205,7 +206,7 @@ if __name__ == "__main__":
     args = sys.argv
     mode = args[1]
     if mode == 'train':
-        if len(args) != 6:
+        if len(args) != 7:
             print ('6 Arguments expected for training mode: <mode> <data_file>'
                    ' <model_file> '
                    '<max_update><regularization><learning_rate>')
