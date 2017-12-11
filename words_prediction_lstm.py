@@ -57,7 +57,8 @@ def graph(x, y1, y2):
     plt.show()
 
 
-def train(train_data_file, model_file, max_update, learning_rate=0.001):
+def train(train_data_file, model_file, max_update,regularization='L1',
+          learning_rate=0.001):
     training_data = utils.read_data(train_data_file)
     # print training_data
     encode, decode = utils.build_encode_decode_dictionary(training_data)
@@ -67,11 +68,24 @@ def train(train_data_file, model_file, max_update, learning_rate=0.001):
     y = tf.placeholder("float", [None, words_size])
 
     pred = build_lstm(x, num_input, words_size)
-
     start_time = time.time()
+    regularizer = 0
+    if regularization == 'L1':
+        regularizer = 0.001 * sum(
+            tf.nn.l1_loss(tf_var)
+            for tf_var in tf.trainable_variables()
+            if not ("noreg" in tf_var.name or "Bias" in tf_var.name)
+        )
+    elif regularization == 'L2':
+        regularizer = 0.001 * sum(
+            tf.nn.l2_loss(tf_var)
+            for tf_var in tf.trainable_variables()
+            if not ("noreg" in tf_var.name or "Bias" in tf_var.name)
+        )
+
     # Loss and optimizer
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-        logits=pred, labels=y))
+        logits=pred, labels=y) + regularizer)
     optimizer = tf.train.RMSPropOptimizer(
         learning_rate=learning_rate).minimize(cost)
 
@@ -192,15 +206,25 @@ if __name__ == "__main__":
     mode = args[1]
     if mode == 'train':
         if len(args) != 6:
-            print ('5 Arguments expected for training mode: <mode> <data_file>'
-                   ' <model_file> <max_update> <learning_rate>')
+            print ('6 Arguments expected for training mode: <mode> <data_file>'
+                   ' <model_file> '
+                   '<max_update><regularization><learning_rate>')
             exit(0)
         data_file = args[2]
         model_file = args[3]
         max_update = int(args[4])
-        learning_rate = float(args[5])
-
-        train(data_file, model_file, max_update, learning_rate)
+        regularization = args[5]
+        learning_rate = float(args[6])
+        if regularization == 'l1' or regularization == 'L1':
+            regularization = 'L1'
+        elif regularization == 'l2' or regularization == 'L2':
+            regularization = 'L2'
+        elif regularization.lower() == 'none':
+            regularization = 'none'
+        else:
+            sys.exit("Invalid value in regularization! allowed values are: "
+                     "l1,l2,none")
+        train(data_file, model_file, max_update,regularization, learning_rate)
     elif mode == 'test':
         if len(args) != 6:
             print ('5 Arguments expected for testing mode: <mode> '
