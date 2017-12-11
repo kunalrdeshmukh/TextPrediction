@@ -8,13 +8,13 @@ import time
 import sys
 import os
 
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 display_step = 1000
 num_hidden = 512
 num_input = 3
 num_layers = 1
 max_grad_norm = 5
+
 
 def build_lstm(x, num_input, words_size):
     weights = {
@@ -33,14 +33,13 @@ def build_lstm(x, num_input, words_size):
     rnn_cell = tf.contrib.rnn.MultiRNNCell(
         [lstm_cell() for _ in range(num_layers)])
     # generate prediction
-    outputs, states = rnn.static_rnn(rnn_cell,x,
-                                              dtype=tf.float32)
+    outputs, states = rnn.static_rnn(rnn_cell, x,
+                                     dtype=tf.float32)
 
     # rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(num_hidden),
     #               rnn.BasicLSTMCell(num_hidden)])
     # # generate prediction
     # outputs, states = rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
-
 
     # Tried two ways below, got error :
     # outputs, states = rnn.static_bidirectional_rnn(rnn_cell,rnn_cell,x,
@@ -55,11 +54,15 @@ def build_lstm(x, num_input, words_size):
     # we only want the last outputtf.contrib.rnn.static_bidirectional_rnn
     return tf.matmul(outputs[-1], weights['weight']) + biases['bias']
 
+
 def lstm_cell():
-  return tf.contrib.rnn.BasicLSTMCell(num_hidden,state_is_tuple=True)
+    return tf.contrib.rnn.BasicLSTMCell(num_hidden, state_is_tuple=True)
+
 
 def get_weights():
-  return [v for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES) if v.name.endswith('weights:0')]
+    return [v for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES) if
+            v.name.endswith('weights:0')]
+
 
 def graph(x, y1, y2):
     # plt.title("" + sys.argv[1]+"  "+sys.argv[3]+"  "+sys.argv[4])
@@ -67,15 +70,15 @@ def graph(x, y1, y2):
     plt.ylabel("Cost-Accuracy")
     # plt.plot(x, y, color='blue', label="Training Cost", linestyle='dashed')
     acc_line, = plt.plot(x, y1, color='blue',
-                              label="Accuracy",
-                              linestyle='dashed')
+                         label="Accuracy",
+                         linestyle='dashed')
     training_line, = plt.plot(x, y2, color='green',
-                                label="Training cost ", linestyle='dashed')
+                              label="Training cost ", linestyle='dashed')
     plt.legend(handles=[acc_line, training_line], loc=2)
     plt.show()
 
 
-def train(train_data_file, model_file, max_update,regularization='L1',
+def train(train_data_file, model_file, max_update, regularization='L1',
           learning_rate=0.001):
     training_data = utils.read_data(train_data_file)
     # print training_data
@@ -88,7 +91,6 @@ def train(train_data_file, model_file, max_update,regularization='L1',
     pred = build_lstm(x, num_input, words_size)
     start_time = time.time()
 
-
     # Loss and optimizer
     if regularization == 'L1':
         l1_regularizer = tf.contrib.layers.l1_regularizer(
@@ -98,7 +100,7 @@ def train(train_data_file, model_file, max_update,regularization='L1',
         regularization_cost = tf.contrib.layers.apply_regularization(
             l1_regularizer, weights)
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-            logits=pred, labels=y)) +  regularization_cost
+            logits=pred, labels=y)) + regularization_cost
     elif regularization == 'L2':
         l2_regularizer = tf.contrib.layers.l2_regularizer(
             scale=0.005, scope=None)
@@ -107,20 +109,18 @@ def train(train_data_file, model_file, max_update,regularization='L1',
             l2_regularizer, weights)
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
             logits=pred, labels=y)) + regularization_cost
-    else :
+    else:
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
             logits=pred, labels=y))
 
-    # optimizer = tf.train.GradientDescentOptimizer(
-    #     learning_rate=learning_rate) #.minimize(cost)
+    optimizer = tf.train.GradientDescentOptimizer(
+        learning_rate=learning_rate).minimize(cost)
     # gvs = optimizer.compute_gradients(cost)
     # capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
     # train_op = optimizer.apply_gradients(capped_gvs)
 
-
-    optimizer = tf.train.RMSPropOptimizer(learning_rate = learning_rate).\
-        minimize(cost)
-
+    # optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate). \
+    #     minimize(cost)
 
     # Model evaluation
     correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
@@ -147,7 +147,7 @@ def train(train_data_file, model_file, max_update,regularization='L1',
             words_freq = [[encode[str(training_data[i])]] for i in
                           range(offset, offset + num_input)]
             words_freq = np.reshape(np.array(words_freq),
-                                         [-1, num_input, 1])
+                                    [-1, num_input, 1])
 
             onehot_output = np.zeros([words_size], dtype=float)
             onehot_output[
@@ -160,8 +160,8 @@ def train(train_data_file, model_file, max_update,regularization='L1',
             loss_total += loss
             acc_total += acc
             if (step + 1) % display_step == 0:
-                print "Step= ", str(step + 1),  ", Avg loss= ", \
-                    (loss_total / display_step),  ", Avg accuracy= ", \
+                print "Step= ", str(step + 1), ", Avg loss= ", \
+                    (loss_total / display_step), ", Avg accuracy= ", \
                     (acc_total / display_step)
                 step_history.append(step)
                 cost_history.append(loss_total / display_step)
@@ -172,7 +172,8 @@ def train(train_data_file, model_file, max_update,regularization='L1',
                     offset, offset + num_input)]
                 plays_out = training_data[offset + num_input]
                 play_out_pred = decode[int(tf.argmax(onehot_pred, 1).eval())]
-                print "%s - [%s] vs [%s]" % (plays_in, plays_out, play_out_pred)
+                print "%s - [%s] vs [%s]" % (
+                plays_in, plays_out, play_out_pred)
             step += 1
             offset += (num_input + 1)
         print "Training completed!"
@@ -216,9 +217,10 @@ def test(data_file, model_file, sample_text, newtext_length):
                 keys = np.reshape(np.array(symbols_in_keys),
                                   [-1, num_input, 1])
                 onehot_pred = session.run(pred,
-                                               feed_dict={x: keys})
+                                          feed_dict={x: keys})
                 onehot_pred_index = int(tf.argmax(onehot_pred, 1).eval())
-                sample_text = "%s %s" % (sample_text, decode[onehot_pred_index])
+                sample_text = "%s %s" % (
+                sample_text, decode[onehot_pred_index])
                 symbols_in_keys = symbols_in_keys[1:]
                 symbols_in_keys.append(onehot_pred_index)
             print(sample_text)
@@ -257,7 +259,7 @@ if __name__ == "__main__":
         else:
             sys.exit("Invalid value in regularization! allowed values are: "
                      "l1,l2,none")
-        train(data_file, model_file, max_update,regularization, learning_rate)
+        train(data_file, model_file, max_update, regularization, learning_rate)
     elif mode == 'test':
         if len(args) != 6:
             print ('5 Arguments expected for testing mode: <mode> '
