@@ -14,7 +14,7 @@ display_step = 1000
 num_hidden = 512
 num_input = 3
 num_layers = 1
-
+max_grad_norm = 5
 
 def build_lstm(x, num_input, words_size):
     weights = {
@@ -58,6 +58,8 @@ def build_lstm(x, num_input, words_size):
 def lstm_cell():
   return tf.contrib.rnn.BasicLSTMCell(num_hidden,state_is_tuple=True)
 
+def get_weights():
+  return [v for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES) if v.name.endswith('weights:0')]
 
 def graph(x, y1, y2):
     # plt.title("" + sys.argv[1]+"  "+sys.argv[3]+"  "+sys.argv[4])
@@ -109,10 +111,15 @@ def train(train_data_file, model_file, max_update,regularization='L1',
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
             logits=pred, labels=y))
 
-    optimizer = tf.train.GradientDescentOptimizer(
-        learning_rate=learning_rate).minimize(cost)
-    # optimizer = tf.train.RMSPropOptimizer(learning_rate = learning_rate).\
-    #     minimize(cost)
+    # optimizer = tf.train.GradientDescentOptimizer(
+    #     learning_rate=learning_rate) #.minimize(cost)
+    # gvs = optimizer.compute_gradients(cost)
+    # capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
+    # train_op = optimizer.apply_gradients(capped_gvs)
+
+
+    optimizer = tf.train.RMSPropOptimizer(learning_rate = learning_rate).\
+        minimize(cost)
 
 
     # Model evaluation
