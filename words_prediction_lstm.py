@@ -35,7 +35,6 @@ def build_lstm(x, num_input, words_size):
     outputs, states = rnn.static_rnn(rnn_cell, x,
                                      dtype=tf.float32)
 
-
     # there are num_input outputs but
     # we only want the last outputtf.contrib.rnn.static_bidirectional_rnn
     return tf.matmul(outputs[-1], weights['weight']) + biases['bias']
@@ -61,15 +60,15 @@ def graph(x, y1, y2):
     plt.legend(handles=[acc_line, training_line], loc=2)
     plt.show()
 
+
 def plot_test_accuracy(counts):
     plt.xlabel("No. of words")
     plt.ylabel("Accuracy")
     accuracy = []
     for i in range(len(counts)):
-        accuracy.append(counts[:(i+1)].count(1)*1.0/(i+1))
-    plt.plot(range(1,len(counts)+1),accuracy)
+        accuracy.append(counts[:(i + 1)].count(1) * 1.0 / (i + 1))
+    plt.plot(range(1, len(counts) + 1), accuracy)
     plt.show()
-
 
 
 def train(train_data_file, model_file, max_update, regularization='L1',
@@ -106,7 +105,6 @@ def train(train_data_file, model_file, max_update, regularization='L1',
     else:
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
             logits=pred, labels=y))
-
 
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate). \
         minimize(cost)
