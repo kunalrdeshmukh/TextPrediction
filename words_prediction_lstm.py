@@ -77,9 +77,15 @@ def graph(x, y1, y2):
     plt.legend(handles=[acc_line, training_line], loc=2)
     plt.show()
 
-def plot_test_accuracy():
+def plot_test_accuracy(counts):
     plt.xlabel("No. of words")
     plt.ylabel("Accuracy")
+    accuracy = []
+    for i in range(len(counts)):
+        accuracy.append(counts[:(i+1)].count(1)*1.0/(i+1))
+    plt.plot(range(1,len(counts)+1),accuracy)
+    plt.show()
+
 
 
 def train(train_data_file, model_file, max_update, regularization='L1',
@@ -244,6 +250,7 @@ def test(data_file, model_file, sample_text, newtext_length):
                         count_correct.append(0)
                 print "Test Accuracy :", (count_correct.count(
                     1) * 1.0) / len(count_correct)
+                plot_test_accuracy(count_correct)
         except:
             print("Word not in the encoded dictionary")
 
