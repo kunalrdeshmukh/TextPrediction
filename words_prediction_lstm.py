@@ -77,6 +77,10 @@ def graph(x, y1, y2):
     plt.legend(handles=[acc_line, training_line], loc=2)
     plt.show()
 
+def plot_test_accuracy():
+    plt.xlabel("No. of words")
+    plt.ylabel("Accuracy")
+
 
 def train(train_data_file, model_file, max_update, regularization='L1',
           learning_rate=0.001):
@@ -117,7 +121,7 @@ def train(train_data_file, model_file, max_update, regularization='L1',
     # capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
     # train_op = optimizer.apply_gradients(capped_gvs)
 
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate = learning_rate).\
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate). \
         minimize(cost)
     # optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate). \
     #     minimize(cost)
@@ -173,7 +177,7 @@ def train(train_data_file, model_file, max_update, regularization='L1',
                 plays_out = training_data[offset + num_input]
                 play_out_pred = decode[int(tf.argmax(onehot_pred, 1).eval())]
                 print "%s - [%s] vs [%s]" % (
-                plays_in, plays_out, play_out_pred)
+                    plays_in, plays_out, play_out_pred)
             step += 1
             offset += (num_input + 1)
         print "Training completed!"
@@ -220,10 +224,26 @@ def test(data_file, model_file, sample_text, newtext_length):
                                           feed_dict={x: keys})
                 onehot_pred_index = int(tf.argmax(onehot_pred, 1).eval())
                 sample_text = "%s %s" % (
-                sample_text, decode[onehot_pred_index])
+                    sample_text, decode[onehot_pred_index])
                 symbols_in_keys = symbols_in_keys[1:]
                 symbols_in_keys.append(onehot_pred_index)
             print(sample_text)
+            predictions = sample_text.split(" ")
+            original_text = predictions[:3]
+            predictions = predictions[3:]
+            index = utils.find_index(training_data, original_text)
+            if index == -1:
+                print "No such original text find. Hence accuracy cannot be " \
+                      "calculated."
+            else:
+                count_correct = []
+                for i in range(len(predictions)):
+                    if predictions[i] == training_data[index + i]:
+                        count_correct.append(1)
+                    else:
+                        count_correct.append(0)
+                print "Test Accuracy :", (count_correct.count(
+                    1) * 1.0) / len(count_correct)
         except:
             print("Word not in the encoded dictionary")
 

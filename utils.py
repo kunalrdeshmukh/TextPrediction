@@ -39,3 +39,11 @@ def build_encode_decode_dictionary(text):
             encode[word] = len(encode)
         decode = dict(zip(encode.values(), encode.keys()))
         return encode, decode
+
+def find_index(training_data,original_text):
+    for i in range(len(training_data)-2):
+        if original_text[0] == training_data[i]:
+            if original_text[1] == training_data[i+1]:
+                if original_text[2] == training_data[i+2]:
+                    return i+3
+    return -1
