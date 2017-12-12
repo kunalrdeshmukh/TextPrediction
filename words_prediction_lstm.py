@@ -27,7 +27,6 @@ def build_lstm(x, num_input, words_size):
     x = tf.reshape(x, [-1, num_input])
 
     # Generate a num_input-element sequence of inputs
-    # (eg. [had] [a] [general] -> [20] [6] [33])
     x = tf.split(x, num_input, 1)
 
     rnn_cell = tf.contrib.rnn.MultiRNNCell(
@@ -36,19 +35,6 @@ def build_lstm(x, num_input, words_size):
     outputs, states = rnn.static_rnn(rnn_cell, x,
                                      dtype=tf.float32)
 
-    # rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(num_hidden),
-    #               rnn.BasicLSTMCell(num_hidden)])
-    # # generate prediction
-    # outputs, states = rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
-
-    # Tried two ways below, got error :
-    # outputs, states = rnn.static_bidirectional_rnn(rnn_cell,rnn_cell,x,
-    #                                                dtype=tf.float32)
-    # outputs, states = tf.nn.bidirectional_dynamic_rnn(
-    # cell_fw=rnn_cell,
-    # cell_bw=rnn_cell,
-    # dtype=tf.float64,
-    # inputs=x)
 
     # there are num_input outputs but
     # we only want the last outputtf.contrib.rnn.static_bidirectional_rnn
@@ -65,10 +51,8 @@ def get_weights():
 
 
 def graph(x, y1, y2):
-    # plt.title("" + sys.argv[1]+"  "+sys.argv[3]+"  "+sys.argv[4])
     plt.xlabel("Max Updates")
     plt.ylabel("Cost-Accuracy")
-    # plt.plot(x, y, color='blue', label="Training Cost", linestyle='dashed')
     acc_line, = plt.plot(x, y1, color='blue',
                          label="Accuracy",
                          linestyle='dashed')
@@ -123,9 +107,6 @@ def train(train_data_file, model_file, max_update, regularization='L1',
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
             logits=pred, labels=y))
 
-    # gvs = optimizer.compute_gradients(cost)
-    # capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
-    # train_op = optimizer.apply_gradients(capped_gvs)
 
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate). \
         minimize(cost)
